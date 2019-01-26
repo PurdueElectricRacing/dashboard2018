@@ -97,8 +97,8 @@ static void MX_GPIO_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SAI1_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_ADC1_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -266,8 +266,8 @@ int main(void)
   MX_CAN1_Init();
   MX_I2C1_Init();
   MX_SAI1_Init();
-  MX_ADC1_Init();
   MX_SPI1_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   CANFilterConfig();
   m_CAN =			xSemaphoreCreateMutex();
@@ -437,10 +437,10 @@ static void MX_ADC1_Init(void)
   }
   /**Configure Regular Channel 
   */
-  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Channel = ADC_CHANNEL_16;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
-  sConfig.SingleDiff = ADC_DIFFERENTIAL_ENDED;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -645,7 +645,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : SteerAngle_Pin */
   GPIO_InitStruct.Pin = SteerAngle_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(SteerAngle_GPIO_Port, &GPIO_InitStruct);
 
