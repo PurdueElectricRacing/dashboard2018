@@ -233,6 +233,38 @@ void taskRXCANProcess()
 		}
 	}
 }
+
+void taskTorquePos()
+{
+	int raw_adc_value_one = 0;
+	int raw_adc_value_two = 0;
+	while (1)
+	{
+		HAL_ADC_Start(&hadc1); //Start the ADC
+			HAL_ADC_PollForConversion(&hadc1, 10); //Begin first poll
+			raw_adc_value_one = HAL_ADC_GetValue(&hadc1);
+			HAL_ADC_PollForConversion(&hadc1, 10);
+			raw_adc_value_two = HAL_ADC_GetValue(&hadc1);
+			HAL_ADC_Stop(&hadc1);
+/*
+			CanTxMsgTypeDef tx;
+					tx.IDE = CAN_ID_STD;
+					tx.RTR = CAN_RTR_DATA;
+					tx.StdId = 0x7C0;
+					tx.DLC = 4;
+					tx.Data[0] =	(uint8_t) raw_adc_value_one;	//bytes 7-0
+					tx.Data[1] =	(uint8_t) (raw_adc_value_one >> 8);		//bytes 11-8
+					tx.Data[2] =	(uint8_t) raw_adc_value_two;	//bytes 7-0
+					tx.Data[3] =	(uint8_t) (raw_adc_value_two >> 8);		//bytes 11-8
+
+					//hcan1.pTxMsg = &tx;
+					//HAL_CAN_Transmit_IT(&hcan1);						//transmit staged message
+
+					xQueueSendToBack(q_txcan, &tx, 100);
+					*/
+					vTaskDelay(500);
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -269,14 +301,15 @@ int main(void)
   MX_SPI1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  CANFilterConfig();
+//  CANFilterConfig();
   m_CAN =			xSemaphoreCreateMutex();
   q_txcan = 		xQueueCreate(3, sizeof(CanTxMsgTypeDef));
   q_rxcan = 		xQueueCreate(3, sizeof(CanRxMsgTypeDef));
-  xTaskCreate(taskTXCAN, "TX CAN", 128, NULL, 1, NULL);
+  //xTaskCreate(taskTXCAN, "TX CAN", 128, NULL, 1, NULL);
   //xTaskCreate(taskRXCAN, "RX CAN", 32, NULL, 1, NULL);
   //xTaskCreate(taskRXCANProcess, "TX CAN Process", 64, NULL, 1, NULL);
-  xTaskCreate(taskBlink, "Blink CAN", 64, NULL, 1, NULL);
+  //xTaskCreate(taskBlink, "Blink CAN", 64, NULL, 1, NULL);
+  xTaskCreate(taskTorquePos, "Steering CAN", 128, NULL, 1, NULL);
 
 
 
@@ -284,8 +317,8 @@ int main(void)
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 
 
-	HAL_CAN_Receive_IT(&hcan1, 0);
-	HAL_CAN_Receive_IT(&hcan1, 1);
+	//HAL_CAN_Receive_IT(&hcan1, 0);
+	//HAL_CAN_Receive_IT(&hcan1, 1);
 
 
 
@@ -468,7 +501,7 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 1 */
 
   /* USER CODE END CAN1_Init 1 */
-  hcan1.Instance = CAN1;
+ /* hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 4;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
@@ -479,7 +512,7 @@ static void MX_CAN1_Init(void)
   hcan1.Init.AutoWakeUp = DISABLE;
   hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE;
+  hcan1.Init.TransmitFifoPriority = DISABLE; */
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
   {
     Error_Handler();
@@ -645,7 +678,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : SteerAngle_Pin */
   GPIO_InitStruct.Pin = SteerAngle_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(SteerAngle_GPIO_Port, &GPIO_InitStruct);
 
