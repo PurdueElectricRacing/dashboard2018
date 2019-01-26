@@ -1,7 +1,9 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * File Name          : main.h
-  * Description        : This file contains the common defines of the application
+  * @file           : main.h
+  * @brief          : Header for main.c file.
+  *                   This file contains the common defines of the application.
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -9,7 +11,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -45,59 +47,79 @@
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
-  /* Includes ------------------------------------------------------------------*/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm32l4xx_hal.h"
+
+/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
-/* Private define ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN ET */
 
+/* USER CODE END ET */
+
+/* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN EC */
+
+/* USER CODE END EC */
+
+/* Exported macro ------------------------------------------------------------*/
+/* USER CODE BEGIN EM */
+
+/* USER CODE END EM */
+
+/* Exported functions prototypes ---------------------------------------------*/
+void Error_Handler(void);
+
+/* USER CODE BEGIN EFP */
+
+/* USER CODE END EFP */
+
+/* Private defines -----------------------------------------------------------*/
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOA
 #define LED1_Pin GPIO_PIN_1
 #define LED1_GPIO_Port GPIOA
 #define LED2_Pin GPIO_PIN_2
 #define LED2_GPIO_Port GPIOA
-#define BTN4_Pin GPIO_PIN_0
-#define BTN4_GPIO_Port GPIOB
-#define BTN4_EXTI_IRQn EXTI0_IRQn
-#define BTN1_Pin GPIO_PIN_8
+#define BTN1_Pin GPIO_PIN_3
 #define BTN1_GPIO_Port GPIOA
-#define BTN1_EXTI_IRQn EXTI9_5_IRQn
-#define BTN2_Pin GPIO_PIN_9
-#define BTN2_GPIO_Port GPIOA
-#define BTN2_EXTI_IRQn EXTI9_5_IRQn
-#define BTN3_Pin GPIO_PIN_10
+#define BTN3_Pin GPIO_PIN_5
 #define BTN3_GPIO_Port GPIOA
-#define BTN3_EXTI_IRQn EXTI15_10_IRQn
+#define LED3_Pin GPIO_PIN_6
+#define LED3_GPIO_Port GPIOA
+#define SteerAngle_Pin GPIO_PIN_7
+#define SteerAngle_GPIO_Port GPIOA
+#define Strain_Ref_Pin GPIO_PIN_0
+#define Strain_Ref_GPIO_Port GPIOB
+#define SteerStrain_Pin GPIO_PIN_1
+#define SteerStrain_GPIO_Port GPIOB
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
-#define VCP_RX_Pin GPIO_PIN_15
-#define VCP_RX_GPIO_Port GPIOA
-#define LD3_Pin GPIO_PIN_3
-#define LD3_GPIO_Port GPIOB
-
+#define BTN2_Pin GPIO_PIN_3
+#define BTN2_GPIO_Port GPIOH
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void _Error_Handler(char *, int);
-
-#define Error_Handler() _Error_Handler(__FILE__, __LINE__)
-
-/**
-  * @}
-  */ 
-
-/**
-  * @}
-*/ 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MAIN_H */
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

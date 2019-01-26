@@ -1,10 +1,11 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    stm32l4xx_it.c
   * @brief   Interrupt Service Routines.
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2018 STMicroelectronics
+  * COPYRIGHT(c) 2019 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -30,12 +31,42 @@
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
-#include "stm32l4xx_hal.h"
-#include "stm32l4xx.h"
+#include "main.h"
 #include "stm32l4xx_it.h"
 #include "cmsis_os.h"
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+/* USER CODE END Includes */
 
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN TD */
+
+/* USER CODE END TD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+ 
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 #include "main.h"
 extern QueueHandle_t q_txcan;
@@ -49,26 +80,15 @@ TickType_t BTN3_LastPressedTime=0;
 
 /* External variables --------------------------------------------------------*/
 extern CAN_HandleTypeDef hcan1;
-
 extern TIM_HandleTypeDef htim1;
 
+/* USER CODE BEGIN EV */
+
+/* USER CODE END EV */
+
 /******************************************************************************/
-/*            Cortex-M4 Processor Interruption and Exception Handlers         */ 
+/*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
 /******************************************************************************/
-
-/**
-* @brief This function handles System tick timer.
-*/
-void SysTick_Handler(void)
-{
-  /* USER CODE BEGIN SysTick_IRQn 0 */
-
-  /* USER CODE END SysTick_IRQn 0 */
-  osSystickHandler();
-  /* USER CODE BEGIN SysTick_IRQn 1 */
-
-  /* USER CODE END SysTick_IRQn 1 */
-}
 
 /******************************************************************************/
 /* STM32L4xx Peripheral Interrupt Handlers                                    */
@@ -78,39 +98,8 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-* @brief This function handles EXTI line0 interrupt.
-*/
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-//	BaseType_t xHigherPriorityTaskWoken;
-//
-//	if (xTaskGetTickCountFromISR() - BTN3_LastPressedTime > 500)
-//	{
-//		HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
-//		CanTxMsgTypeDef msg;
-//		msg.IDE = CAN_ID_STD;
-//		msg.RTR = CAN_RTR_DATA;
-//		msg.DLC = 1;
-//
-//		msg.StdId = 0x352;
-//
-//		msg.Data[0] = 0x01;
-//
-//		xQueueSendToBackFromISR(q_txcan, &msg, &xHigherPriorityTaskWoken);
-//		BTN3_LastPressedTime = xTaskGetTickCountFromISR();
-//	}
-
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-
-/**
-* @brief This function handles CAN1 TX interrupt.
-*/
+  * @brief This function handles CAN1 TX interrupt.
+  */
 void CAN1_TX_IRQHandler(void)
 {
   /* USER CODE BEGIN CAN1_TX_IRQn 0 */
@@ -123,8 +112,8 @@ void CAN1_TX_IRQHandler(void)
 }
 
 /**
-* @brief This function handles CAN1 RX0 interrupt.
-*/
+  * @brief This function handles CAN1 RX0 interrupt.
+  */
 void CAN1_RX0_IRQHandler(void)
 {
   /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
@@ -161,8 +150,8 @@ void CAN1_RX0_IRQHandler(void)
 }
 
 /**
-* @brief This function handles CAN1 RX1 interrupt.
-*/
+  * @brief This function handles CAN1 RX1 interrupt.
+  */
 void CAN1_RX1_IRQHandler(void)
 {
   /* USER CODE BEGIN CAN1_RX1_IRQn 0 */
@@ -176,63 +165,8 @@ void CAN1_RX1_IRQHandler(void)
 }
 
 /**
-* @brief This function handles EXTI line[9:5] interrupts.
-*/
-void EXTI9_5_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-	BaseType_t xHigherPriorityTaskWoken;
-
-	if (EXTI->PR1 & EXTI_PR1_PIF8_Msk)
-	{
-		if (xTaskGetTickCountFromISR() - BTN1_LastPressedTime > 500)
-		{
-			HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
-			CanTxMsgTypeDef msg;
-			msg.IDE = CAN_ID_STD;
-			msg.RTR = CAN_RTR_DATA;
-			msg.DLC = 1;
-
-			msg.StdId = 0x350;
-
-			msg.Data[0] = 0x01;
-
-			xQueueSendToBackFromISR(q_txcan, &msg, &xHigherPriorityTaskWoken);
-			BTN1_LastPressedTime = xTaskGetTickCountFromISR();
-		}
-
-	}
-	if (EXTI->PR1 & EXTI_PR1_PIF9_Msk)
-	{
-		if (xTaskGetTickCountFromISR() - BTN2_LastPressedTime > 500)
-		{
-			HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
-			CanTxMsgTypeDef msg;
-			msg.IDE = CAN_ID_STD;
-			msg.RTR = CAN_RTR_DATA;
-			msg.DLC = 1;
-
-			msg.StdId = 0x351;
-
-			msg.Data[0] = 0x01;
-
-			xQueueSendToBackFromISR(q_txcan, &msg, &xHigherPriorityTaskWoken);
-			BTN2_LastPressedTime = xTaskGetTickCountFromISR();
-		}
-
-	}
-
-  /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
-  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
-
-  /* USER CODE END EXTI9_5_IRQn 1 */
-}
-
-/**
-* @brief This function handles TIM1 update interrupt and TIM16 global interrupt.
-*/
+  * @brief This function handles TIM1 update interrupt and TIM16 global interrupt.
+  */
 void TIM1_UP_TIM16_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_UP_TIM16_IRQn 0 */
@@ -242,20 +176,6 @@ void TIM1_UP_TIM16_IRQHandler(void)
   /* USER CODE BEGIN TIM1_UP_TIM16_IRQn 1 */
 
   /* USER CODE END TIM1_UP_TIM16_IRQn 1 */
-}
-
-/**
-* @brief This function handles EXTI line[15:10] interrupts.
-*/
-void EXTI15_10_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-
-  /* USER CODE END EXTI15_10_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
-  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-
-  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
