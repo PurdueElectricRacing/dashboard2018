@@ -89,6 +89,8 @@ osThreadId defaultTaskHandle;
 QueueHandle_t q_txcan;
 QueueHandle_t q_rxcan;
 SemaphoreHandle_t m_CAN;
+int raw_adc_value_one = 0;
+int raw_adc_value_two = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,31 +110,20 @@ void StartDefaultTask(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int i;
-void taskTest()
-{
-	for(;;) {
-		i ++;
-	}
-}
 
 void CANFilterConfig()
 {
-
-
-	  CAN_FilterConfTypeDef FilterConf;
-	  FilterConf.FilterIdHigh = 	0x205 << 5; // 2
-	  FilterConf.FilterIdLow = 		0x200 << 5; // 0
-	  FilterConf.FilterMaskIdHigh = 0; //3
-	  FilterConf.FilterMaskIdLow = 	0;	//1
-	  FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
-	  FilterConf.FilterNumber = 0;
-	  FilterConf.FilterMode = CAN_FILTERMODE_IDMASK;
-	  FilterConf.FilterScale = CAN_FILTERSCALE_16BIT;
-	  FilterConf.FilterActivation = ENABLE;
-	  HAL_CAN_ConfigFilter(&hcan1, &FilterConf);
-
-
+  CAN_FilterTypeDef FilterConf;
+  FilterConf.FilterIdHigh =         0x205 << 5;
+  FilterConf.FilterIdLow =          0x200 << 5;
+  FilterConf.FilterMaskIdHigh =    0;       // 3
+  FilterConf.FilterMaskIdLow =      0;       // 1
+  FilterConf.FilterFIFOAssignment = CAN_FilterFIFO0;
+  FilterConf.FilterBank = 0;
+  FilterConf.FilterMode = CAN_FILTERMODE_IDMASK;
+  FilterConf.FilterScale = CAN_FILTERSCALE_16BIT;
+  FilterConf.FilterActivation = ENABLE;
+  HAL_CAN_ConfigFilter(&hcan1, &FilterConf);
 }
 
 void taskBlink(void* can)
@@ -146,9 +137,6 @@ void taskBlink(void* can)
 		tx.StdId = 0x600;
 		tx.DLC = 1;
 		tx.Data[0] = 1;
-
-		//hcan1.pTxMsg = &tx;
-		//HAL_CAN_Transmit_IT(&hcan1);						//transmit staged message
 
 		xQueueSendToBack(q_txcan, &tx, 100);
 		vTaskDelay(500);
@@ -164,41 +152,19 @@ void taskTXCAN()
 		//check if this task is triggered
 		if (xQueuePeek(q_txcan, &tx, portMAX_DELAY) == pdTRUE)
 		{
-			//check if CAN mutex is available
-			if (xSemaphoreTake(m_CAN, 50) == pdTRUE)
-			{
-				//HAL_CAN_StateTypeDef state = HAL_CAN_GetState(car.phcan);
-				//if (state != HAL_CAN_STATE_ERROR)
-				{
-					xQueueReceive(q_txcan, &tx, portMAX_DELAY);  //actually take item out of queue
-					//if (HAL_CAN_GetState(&hcan1) == HAL_CAN_STATE_READY)
+			xQueueReceive(q_txcan, &tx, portMAX_DELAY);  //actually take item out of queue
 
-					{
-						hcan1.pTxMsg = &tx;
-						HAL_CAN_Transmit(&hcan1,100);
-					}
-
-				}
-				xSemaphoreGive(m_CAN);  //release CAN mutex
-			}
-
+			CAN_TxHeaderTypeDef header;
+			header.DLC = tx.DLC;
+			header.IDE = tx.IDE;
+			header.RTR = tx.RTR;
+			header.StdId = tx.StdId;
+			header.TransmitGlobalTime = DISABLE;
+			uint32_t mailbox;
+			//send the message
+			while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)); // while mailboxes not free
+			HAL_CAN_AddTxMessage(&hcan1, &header, tx.Data, &mailbox);
 		}
-	}
-}
-
-void taskRXCAN()
-{
-	//CanRxMsgTypeDef rx;
-	//car.phcan->pRxMsg = &rx;
-	for (;;)
-	{
-
-		//check if CAN mutex is available
-		//if (xSemaphoreTake(car.m_CAN, 10) == pdTRUE )
-
-		//	xSemaphoreGive(car.m_CAN);  //release CAN mutex
-
-		vTaskSuspend(NULL);
 	}
 }
 
@@ -236,33 +202,30 @@ void taskRXCANProcess()
 
 void taskTorquePos()
 {
-	int raw_adc_value_one = 0;
-	int raw_adc_value_two = 0;
+//	int raw_adc_value_one = 0;
+//	int raw_adc_value_two = 0;
 	while (1)
 	{
 		HAL_ADC_Start(&hadc1); //Start the ADC
-			HAL_ADC_PollForConversion(&hadc1, 10); //Begin first poll
-			raw_adc_value_one = HAL_ADC_GetValue(&hadc1);
-			HAL_ADC_PollForConversion(&hadc1, 10);
-			raw_adc_value_two = HAL_ADC_GetValue(&hadc1);
-			HAL_ADC_Stop(&hadc1);
-/*
-			CanTxMsgTypeDef tx;
-					tx.IDE = CAN_ID_STD;
-					tx.RTR = CAN_RTR_DATA;
-					tx.StdId = 0x7C0;
-					tx.DLC = 4;
-					tx.Data[0] =	(uint8_t) raw_adc_value_one;	//bytes 7-0
-					tx.Data[1] =	(uint8_t) (raw_adc_value_one >> 8);		//bytes 11-8
-					tx.Data[2] =	(uint8_t) raw_adc_value_two;	//bytes 7-0
-					tx.Data[3] =	(uint8_t) (raw_adc_value_two >> 8);		//bytes 11-8
+		HAL_ADC_PollForConversion(&hadc1, 100); //read channel 12
+		raw_adc_value_one = HAL_ADC_GetValue(&hadc1);
+		HAL_ADC_PollForConversion(&hadc1, 100);
+		raw_adc_value_two = HAL_ADC_GetValue(&hadc1);	//read channel 16
+		HAL_ADC_Stop(&hadc1);
 
-					//hcan1.pTxMsg = &tx;
-					//HAL_CAN_Transmit_IT(&hcan1);						//transmit staged message
+		CanTxMsgTypeDef tx;
+		tx.IDE = CAN_ID_STD;
+		tx.RTR = CAN_RTR_DATA;
+		tx.StdId = 0x7C0;
+		tx.DLC = 4;
+		tx.Data[0] =	(uint8_t) raw_adc_value_one;	//bytes 7-0
+		tx.Data[1] =	(uint8_t) (raw_adc_value_one >> 8);		//bytes 11-8
+		tx.Data[2] =	(uint8_t) raw_adc_value_two;	//bytes 7-0
+		tx.Data[3] =	(uint8_t) (raw_adc_value_two >> 8);		//bytes 11-8
 
-					xQueueSendToBack(q_txcan, &tx, 100);
-					*/
-					vTaskDelay(500);
+		xQueueSendToBack(q_txcan, &tx, 100);
+
+		vTaskDelay(500 / portTICK_RATE_MS);
 	}
 }
 /* USER CODE END 0 */
@@ -305,10 +268,10 @@ int main(void)
   m_CAN =			xSemaphoreCreateMutex();
   q_txcan = 		xQueueCreate(3, sizeof(CanTxMsgTypeDef));
   q_rxcan = 		xQueueCreate(3, sizeof(CanRxMsgTypeDef));
-  //xTaskCreate(taskTXCAN, "TX CAN", 128, NULL, 1, NULL);
+  xTaskCreate(taskTXCAN, "TX CAN", 128, NULL, 1, NULL);
   //xTaskCreate(taskRXCAN, "RX CAN", 32, NULL, 1, NULL);
   //xTaskCreate(taskRXCANProcess, "TX CAN Process", 64, NULL, 1, NULL);
-  //xTaskCreate(taskBlink, "Blink CAN", 64, NULL, 1, NULL);
+  xTaskCreate(taskBlink, "Blink CAN", 64, NULL, 1, NULL);
   xTaskCreate(taskTorquePos, "Steering CAN", 128, NULL, 1, NULL);
 
 
@@ -316,11 +279,11 @@ int main(void)
 	HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 
-
+	CANFilterConfig();
 	//HAL_CAN_Receive_IT(&hcan1, 0);
 	//HAL_CAN_Receive_IT(&hcan1, 1);
-
-
+	HAL_CAN_Start(&hcan1);
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
   /* USER CODE END 2 */
 
@@ -450,19 +413,19 @@ static void MX_ADC1_Init(void)
   /**Common config 
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.NbrOfConversion = 2;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   hadc1.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
@@ -470,9 +433,9 @@ static void MX_ADC1_Init(void)
   }
   /**Configure Regular Channel 
   */
-  sConfig.Channel = ADC_CHANNEL_16;
+  sConfig.Channel = ADC_CHANNEL_12;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -480,8 +443,25 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
+  /**Configure Regular Channel 
+  */
+  sConfig.Channel = ADC_CHANNEL_16;
+  sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN ADC1_Init 2 */
-
+//  sConfig.Channel = ADC_CHANNEL_12;
+//	sConfig.Rank = ADC_REGULAR_RANK_2;
+//	sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+//	sConfig.SingleDiff = ADC_SINGLE_ENDED;
+//	sConfig.OffsetNumber = ADC_OFFSET_NONE;
+//	sConfig.Offset = 0;
+//	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+//	{
+//		Error_Handler();
+//	}
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -501,7 +481,7 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 1 */
 
   /* USER CODE END CAN1_Init 1 */
- /* hcan1.Instance = CAN1;
+  hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 4;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
@@ -512,7 +492,7 @@ static void MX_CAN1_Init(void)
   hcan1.Init.AutoWakeUp = DISABLE;
   hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
-  hcan1.Init.TransmitFifoPriority = DISABLE; */
+  hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
   {
     Error_Handler();

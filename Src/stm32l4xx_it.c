@@ -123,29 +123,6 @@ void CAN1_RX0_IRQHandler(void)
   HAL_CAN_IRQHandler(&hcan1);
   /* USER CODE BEGIN CAN1_RX0_IRQn 1 */
 
-
-
-	//xQueueSendFromISR(q_rxcan, (hcan1.pRxMsg), NULL);  //send to the rx can process task
-
-//	//check what kind of message we received
-//	switch (hcan1.pRxMsg->StdId)
-//	{
-//		case 0x200:  //if pedalbox1 message
-//		{
-//			if (hcan1.pRxMsg->Data[0] == 1) //car is in ready to drive
-//			{
-//				HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-//			}
-//			else if (hcan1.pRxMsg->Data[0] == 0) //car is not ready to drive
-//			{
-//				HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-//			}
-//			break;
-//		}
-//	}
-	HAL_CAN_Receive_IT(&hcan1, 0);  //get ready to receive again
-
-
   /* USER CODE END CAN1_RX0_IRQn 1 */
 }
 
@@ -159,8 +136,7 @@ void CAN1_RX1_IRQHandler(void)
   /* USER CODE END CAN1_RX1_IRQn 0 */
   HAL_CAN_IRQHandler(&hcan1);
   /* USER CODE BEGIN CAN1_RX1_IRQn 1 */
-	//xQueueSendFromISR(q_rxcan, (hcan1.pRxMsg), NULL);  //send to the rx can process task
-	HAL_CAN_Receive_IT(&hcan1, 1);  //get ready to receive again
+
   /* USER CODE END CAN1_RX1_IRQn 1 */
 }
 
