@@ -89,8 +89,6 @@ osThreadId defaultTaskHandle;
 QueueHandle_t q_txcan;
 QueueHandle_t q_rxcan;
 SemaphoreHandle_t m_CAN;
-int raw_adc_value_one = 0;
-int raw_adc_value_two = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -166,7 +164,6 @@ void taskTXCAN()
 			while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)); // while mailboxes not free
 			HAL_CAN_AddTxMessage(&hcan1, &header, tx.Data, &mailbox);
 		}
-		vTaskDelay(500 / portTICK_RATE_MS);
 	}
 }
 
@@ -204,15 +201,16 @@ void taskRXCANProcess()
 
 void taskTorquePos()
 {
-//	int raw_adc_value_one = 0;
-//	int raw_adc_value_two = 0;
+	int steer_angle = 0;
+	int steer_strain = 0;
+
 	while (1)
 	{
 		HAL_ADC_Start(&hadc1); //Start the ADC
 		HAL_ADC_PollForConversion(&hadc1, 100); //read channel 12
-		raw_adc_value_one = HAL_ADC_GetValue(&hadc1);
+		steer_angle = HAL_ADC_GetValue(&hadc1);
 		HAL_ADC_PollForConversion(&hadc1, 100);
-		raw_adc_value_two = HAL_ADC_GetValue(&hadc1);	//read channel 16
+		steer_strain = HAL_ADC_GetValue(&hadc1);	//read channel 16
 		HAL_ADC_Stop(&hadc1);
 
 		CanTxMsgTypeDef tx;
@@ -220,14 +218,14 @@ void taskTorquePos()
 		tx.RTR = CAN_RTR_DATA;
 		tx.StdId = 0x7C0;
 		tx.DLC = 4;
-		tx.Data[0] =	(uint8_t) raw_adc_value_one;	//bytes 7-0
-		tx.Data[1] =	(uint8_t) (raw_adc_value_one >> 8);		//bytes 11-8
-		tx.Data[2] =	(uint8_t) raw_adc_value_two;	//bytes 7-0
-		tx.Data[3] =	(uint8_t) (raw_adc_value_two >> 8);		//bytes 11-8
+		tx.Data[0] =	(uint8_t) steer_angle;	//bytes 7-0
+		tx.Data[1] =	(uint8_t) (steer_angle >> 8);		//bytes 11-8
+		tx.Data[2] =	(uint8_t) steer_strain;	//bytes 7-0
+		tx.Data[3] =	(uint8_t) (steer_strain >> 8);		//bytes 11-8
 
 		xQueueSendToBack(q_txcan, &tx, 100);
 
-		vTaskDelay(500 / portTICK_RATE_MS);
+		vTaskDelay(20 / portTICK_RATE_MS);
 	}
 }
 /* USER CODE END 0 */
@@ -273,7 +271,7 @@ int main(void)
   xTaskCreate(taskTXCAN, "TX CAN", 128, NULL, 1, NULL);
   //xTaskCreate(taskRXCAN, "RX CAN", 32, NULL, 1, NULL);
   //xTaskCreate(taskRXCANProcess, "TX CAN Process", 64, NULL, 1, NULL);
-  xTaskCreate(taskBlink, "Blink CAN", 64, NULL, 1, NULL);
+  //xTaskCreate(taskBlink, "Blink CAN", 64, NULL, 1, NULL);
   xTaskCreate(taskTorquePos, "Steering CAN", 128, NULL, 1, NULL);
 
 
