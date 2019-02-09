@@ -161,10 +161,12 @@ void taskTXCAN()
 			header.StdId = tx.StdId;
 			header.TransmitGlobalTime = DISABLE;
 			uint32_t mailbox;
+			HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 			//send the message
 			while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)); // while mailboxes not free
 			HAL_CAN_AddTxMessage(&hcan1, &header, tx.Data, &mailbox);
 		}
+		vTaskDelay(500 / portTICK_RATE_MS);
 	}
 }
 
@@ -280,8 +282,6 @@ int main(void)
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 
 	CANFilterConfig();
-	//HAL_CAN_Receive_IT(&hcan1, 0);
-	//HAL_CAN_Receive_IT(&hcan1, 1);
 	HAL_CAN_Start(&hcan1);
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
